@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ChatDialog } from "@/components/ChatDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -298,6 +299,17 @@ function InquiriesTab({ user }: { user: any }) {
                         </span>
                       )}
                     </div>
+                  </div>
+                  <div className="shrink-0">
+                    <ChatDialog
+                      propertyId={inq.property_id}
+                      landlordId={user.id}
+                      propertyTitle={inq.property_title}
+                      tenantId={inq.tenant_id}
+                      triggerLabel="Reply"
+                      triggerVariant="outline"
+                      triggerSize="sm"
+                    />
                   </div>
                 </div>
               </CardContent>
