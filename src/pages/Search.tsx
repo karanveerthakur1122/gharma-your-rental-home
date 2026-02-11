@@ -139,6 +139,7 @@ export default function SearchPage() {
               <SelectItem value="1bhk">1 BHK</SelectItem>
               <SelectItem value="2bhk">2 BHK</SelectItem>
               <SelectItem value="flat">Flat</SelectItem>
+              <SelectItem value="hostel">Hostel</SelectItem>
             </SelectContent>
           </Select>
           <Select value={sortBy} onValueChange={setSortBy}>
