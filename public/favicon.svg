@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="houseGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1d4ed8;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- House roof -->
+  <path d="M50 15 L85 45 L75 45 L75 80 L25 80 L25 45 L15 45 Z" 
+        fill="url(#houseGradient)" 
+        stroke="#1e40af" 
+        stroke-width="2"/>
+  
+  <!-- Door -->
+  <rect x="42" y="60" width="16" height="20" fill="#1e3a8a" rx="2"/>
+  
+  <!-- Window left -->
+  <rect x="32" y="50" width="10" height="10" fill="#60a5fa" rx="1"/>
+  
+  <!-- Window right -->
+  <rect x="58" y="50" width="10" height="10" fill="#60a5fa" rx="1"/>
+  
+  <!-- Roof accent -->
+  <path d="M50 15 L85 45 L80 45 L50 20 L20 45 L15 45 Z" 
+        fill="#2563eb" 
+        opacity="0.6"/>
+</svg>
