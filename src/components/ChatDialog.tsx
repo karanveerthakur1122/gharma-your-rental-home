@@ -170,7 +170,7 @@ export function ChatDialog({ propertyId, landlordId, propertyTitle }: ChatDialog
     setSending(false);
   };
 
-  if (!user || user.id === landlordId) return null;
+  if (!user) return null;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
