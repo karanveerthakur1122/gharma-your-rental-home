@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-// Using roleLoading to prevent premature redirects
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +13,7 @@ import { toast } from "@/hooks/use-toast";
 import { ArrowLeft, Upload, X, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
-type RoomType = "single" | "1bhk" | "2bhk" | "flat";
+type RoomType = "single" | "1bhk" | "2bhk" | "flat" | "hostel";
 
 interface FormData {
   title: string;
@@ -36,12 +35,20 @@ interface FormData {
   available_from: string;
   latitude: string;
   longitude: string;
+  // Hostel-specific
+  beds_per_room: string;
+  gender_preference: string;
+  meals_included: boolean;
+  common_area: boolean;
+  locker_available: boolean;
+  curfew_time: string;
 }
 
 const defaultForm: FormData = {
   title: "", description: "", address: "", city: "", area: "", price: "", deposit: "", maintenance_fee: "",
   room_type: "single", furnished: false, parking: false, internet: false, pets_allowed: false, water_available: true,
   bathroom_type: "shared", house_rules: "", available_from: "", latitude: "", longitude: "",
+  beds_per_room: "", gender_preference: "any", meals_included: false, common_area: false, locker_available: false, curfew_time: "",
 };
 
 export default function PropertyForm() {
@@ -82,6 +89,12 @@ export default function PropertyForm() {
       bathroom_type: data.bathroom_type ?? "shared", house_rules: data.house_rules ?? "",
       available_from: data.available_from ?? "", latitude: data.latitude ? String(data.latitude) : "",
       longitude: data.longitude ? String(data.longitude) : "",
+      beds_per_room: data.beds_per_room ? String(data.beds_per_room) : "",
+      gender_preference: data.gender_preference ?? "any",
+      meals_included: data.meals_included ?? false,
+      common_area: data.common_area ?? false,
+      locker_available: data.locker_available ?? false,
+      curfew_time: data.curfew_time ?? "",
     });
     setExistingImages(data.property_images?.sort((a: any, b: any) => a.display_order - b.display_order) ?? []);
     setLoadingData(false);
@@ -131,6 +144,8 @@ export default function PropertyForm() {
     }
     setSubmitting(true);
 
+    const isHostel = form.room_type === "hostel";
+
     const payload = {
       title: form.title, description: form.description || null, address: form.address || null,
       city: form.city, area: form.area || null, price: Number(form.price), deposit: Number(form.deposit) || 0,
@@ -141,6 +156,13 @@ export default function PropertyForm() {
       available_from: form.available_from || null,
       latitude: form.latitude ? Number(form.latitude) : null,
       longitude: form.longitude ? Number(form.longitude) : null,
+      // Hostel fields
+      beds_per_room: isHostel && form.beds_per_room ? Number(form.beds_per_room) : null,
+      gender_preference: isHostel ? form.gender_preference : null,
+      meals_included: isHostel ? form.meals_included : false,
+      common_area: isHostel ? form.common_area : false,
+      locker_available: isHostel ? form.locker_available : false,
+      curfew_time: isHostel && form.curfew_time ? form.curfew_time : null,
     };
 
     if (isEdit) {
@@ -159,6 +181,8 @@ export default function PropertyForm() {
   };
 
   const update = (field: keyof FormData, value: any) => setForm((prev) => ({ ...prev, [field]: value }));
+
+  const isHostel = form.room_type === "hostel";
 
   if (authLoading || loadingData) return <div className="container py-20 text-center text-muted-foreground">Loading...</div>;
 
@@ -207,6 +231,7 @@ export default function PropertyForm() {
                     <SelectItem value="1bhk">1 BHK</SelectItem>
                     <SelectItem value="2bhk">2 BHK</SelectItem>
                     <SelectItem value="flat">Flat</SelectItem>
+                    <SelectItem value="hostel">Hostel</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -224,12 +249,55 @@ export default function PropertyForm() {
           </CardContent>
         </Card>
 
+        {/* Hostel-Specific Details */}
+        {isHostel && (
+          <Card>
+            <CardHeader><CardTitle className="text-lg">Hostel Details</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label>Beds Per Room</Label>
+                  <Input type="number" min={1} max={20} value={form.beds_per_room} onChange={(e) => update("beds_per_room", e.target.value)} placeholder="e.g. 4" />
+                </div>
+                <div className="space-y-1">
+                  <Label>Gender Preference</Label>
+                  <Select value={form.gender_preference} onValueChange={(v) => update("gender_preference", v)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="any">Co-ed (Any)</SelectItem>
+                      <SelectItem value="male">Male Only</SelectItem>
+                      <SelectItem value="female">Female Only</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <Label>Curfew Time</Label>
+                <Input type="time" value={form.curfew_time} onChange={(e) => update("curfew_time", e.target.value)} placeholder="e.g. 22:00" />
+                <p className="text-xs text-muted-foreground">Leave empty if no curfew</p>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {([
+                  ["meals_included", "Meals Included"],
+                  ["common_area", "Common Area"],
+                  ["locker_available", "Lockers Available"],
+                ] as [keyof FormData, string][]).map(([key, label]) => (
+                  <label key={key} className="flex items-center gap-2 cursor-pointer">
+                    <Checkbox checked={form[key] as boolean} onCheckedChange={(v) => update(key, !!v)} />
+                    <span className="text-sm">{label}</span>
+                  </label>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Pricing */}
         <Card>
           <CardHeader><CardTitle className="text-lg">Pricing</CardTitle></CardHeader>
           <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-1">
-              <Label>Rent (NPR/mo) *</Label>
+              <Label>{isHostel ? "Rent Per Bed (NPR/mo) *" : "Rent (NPR/mo) *"}</Label>
               <Input type="number" value={form.price} onChange={(e) => update("price", e.target.value)} placeholder="10000" required min={0} />
             </div>
             <div className="space-y-1">

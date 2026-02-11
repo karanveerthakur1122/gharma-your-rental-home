@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import {
-  MapPin, Wifi, Car, PawPrint, Droplets, Bath, Heart, ArrowLeft, Shield, Calendar, Sofa, Home, IndianRupee, ChevronLeft, ChevronRight,
+  MapPin, Wifi, Car, PawPrint, Droplets, Bath, Heart, ArrowLeft, Shield, Calendar, Sofa, Home, IndianRupee, ChevronLeft, ChevronRight, BedDouble, Users, UtensilsCrossed, Lock, Clock, DoorOpen,
 } from "lucide-react";
 import { ChatDialog } from "@/components/ChatDialog";
 
@@ -243,7 +243,64 @@ export default function PropertyDetail() {
             </div>
           </section>
 
-          {/* House rules */}
+          {/* Hostel Details */}
+          {property.room_type === "hostel" && (
+            <section aria-label="Hostel details">
+              <h2 className="font-semibold text-lg mb-3">Hostel Details</h2>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {property.beds_per_room && (
+                  <div className="flex items-center gap-3 p-3 rounded-lg border bg-accent/50 border-accent text-accent-foreground">
+                    <BedDouble className="h-5 w-5 shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium">Beds/Room</p>
+                      <p className="text-xs opacity-75">{property.beds_per_room} beds</p>
+                    </div>
+                  </div>
+                )}
+                {property.gender_preference && (
+                  <div className="flex items-center gap-3 p-3 rounded-lg border bg-accent/50 border-accent text-accent-foreground">
+                    <Users className="h-5 w-5 shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium">Gender</p>
+                      <p className="text-xs opacity-75">{property.gender_preference === "any" ? "Co-ed" : property.gender_preference === "male" ? "Male Only" : "Female Only"}</p>
+                    </div>
+                  </div>
+                )}
+                <div className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${property.meals_included ? "bg-accent/50 border-accent text-accent-foreground" : "bg-muted/30 border-border text-muted-foreground"}`}>
+                  <UtensilsCrossed className="h-5 w-5 shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium">Meals</p>
+                    <p className="text-xs opacity-75">{property.meals_included ? "Included" : "Not included"}</p>
+                  </div>
+                </div>
+                <div className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${property.common_area ? "bg-accent/50 border-accent text-accent-foreground" : "bg-muted/30 border-border text-muted-foreground"}`}>
+                  <DoorOpen className="h-5 w-5 shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium">Common Area</p>
+                    <p className="text-xs opacity-75">{property.common_area ? "Available" : "Not available"}</p>
+                  </div>
+                </div>
+                <div className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${property.locker_available ? "bg-accent/50 border-accent text-accent-foreground" : "bg-muted/30 border-border text-muted-foreground"}`}>
+                  <Lock className="h-5 w-5 shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium">Lockers</p>
+                    <p className="text-xs opacity-75">{property.locker_available ? "Available" : "Not available"}</p>
+                  </div>
+                </div>
+                {property.curfew_time && (
+                  <div className="flex items-center gap-3 p-3 rounded-lg border bg-accent/50 border-accent text-accent-foreground">
+                    <Clock className="h-5 w-5 shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium">Curfew</p>
+                      <p className="text-xs opacity-75">{property.curfew_time}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
+
           {property.house_rules && (
             <section aria-label="House rules">
               <h2 className="font-semibold text-lg mb-2">House Rules</h2>

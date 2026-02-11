@@ -187,19 +187,25 @@ export type Database = {
           area: string | null
           available_from: string | null
           bathroom_type: string | null
+          beds_per_room: number | null
           city: string
+          common_area: boolean | null
           created_at: string
+          curfew_time: string | null
           deposit: number | null
           description: string | null
           furnished: boolean | null
+          gender_preference: string | null
           house_rules: string | null
           id: string
           internet: boolean | null
           is_vacant: boolean
           landlord_id: string
           latitude: number | null
+          locker_available: boolean | null
           longitude: number | null
           maintenance_fee: number | null
+          meals_included: boolean | null
           parking: boolean | null
           pets_allowed: boolean | null
           price: number
@@ -214,19 +220,25 @@ export type Database = {
           area?: string | null
           available_from?: string | null
           bathroom_type?: string | null
+          beds_per_room?: number | null
           city: string
+          common_area?: boolean | null
           created_at?: string
+          curfew_time?: string | null
           deposit?: number | null
           description?: string | null
           furnished?: boolean | null
+          gender_preference?: string | null
           house_rules?: string | null
           id?: string
           internet?: boolean | null
           is_vacant?: boolean
           landlord_id: string
           latitude?: number | null
+          locker_available?: boolean | null
           longitude?: number | null
           maintenance_fee?: number | null
+          meals_included?: boolean | null
           parking?: boolean | null
           pets_allowed?: boolean | null
           price?: number
@@ -241,19 +253,25 @@ export type Database = {
           area?: string | null
           available_from?: string | null
           bathroom_type?: string | null
+          beds_per_room?: number | null
           city?: string
+          common_area?: boolean | null
           created_at?: string
+          curfew_time?: string | null
           deposit?: number | null
           description?: string | null
           furnished?: boolean | null
+          gender_preference?: string | null
           house_rules?: string | null
           id?: string
           internet?: boolean | null
           is_vacant?: boolean
           landlord_id?: string
           latitude?: number | null
+          locker_available?: boolean | null
           longitude?: number | null
           maintenance_fee?: number | null
+          meals_included?: boolean | null
           parking?: boolean | null
           pets_allowed?: boolean | null
           price?: number
@@ -336,7 +354,7 @@ export type Database = {
       app_role: "tenant" | "landlord" | "admin"
       inquiry_status: "open" | "closed"
       property_status: "pending" | "approved" | "rejected"
-      room_type: "single" | "1bhk" | "2bhk" | "flat"
+      room_type: "single" | "1bhk" | "2bhk" | "flat" | "hostel"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -467,7 +485,7 @@ export const Constants = {
       app_role: ["tenant", "landlord", "admin"],
       inquiry_status: ["open", "closed"],
       property_status: ["pending", "approved", "rejected"],
-      room_type: ["single", "1bhk", "2bhk", "flat"],
+      room_type: ["single", "1bhk", "2bhk", "flat", "hostel"],
     },
   },
 } as const
