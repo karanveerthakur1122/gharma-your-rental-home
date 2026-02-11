@@ -1,3 +1,4 @@
+// react-leaflet v4.2.1 for React 18 compatibility
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
