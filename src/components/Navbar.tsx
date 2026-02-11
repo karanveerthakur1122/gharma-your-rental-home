@@ -54,17 +54,19 @@ export function Navbar() {
   }, [user]);
 
   const MessagesLink = ({ mobile }: { mobile?: boolean }) => (
-    <Button variant="ghost" size="sm" asChild onClick={mobile ? () => setMobileOpen(false) : undefined}>
-      <Link to="/messages" className="relative">
-        <MessageCircle className="h-4 w-4 mr-1" />
-        Messages
-        {unreadCount > 0 && (
-          <Badge className="absolute -top-1.5 -right-2.5 bg-destructive text-destructive-foreground text-[10px] h-4 min-w-4 flex items-center justify-center rounded-full px-1 leading-none">
-            {unreadCount > 99 ? "99+" : unreadCount}
-          </Badge>
-        )}
-      </Link>
-    </Button>
+    <div className="relative" onClick={mobile ? () => setMobileOpen(false) : undefined}>
+      <Button variant="ghost" size="sm" asChild>
+        <Link to="/messages">
+          <MessageCircle className="h-4 w-4 mr-1" />
+          Messages
+        </Link>
+      </Button>
+      {unreadCount > 0 && (
+        <span className="absolute -top-0.5 -right-1 bg-destructive text-destructive-foreground text-[10px] font-bold h-[18px] min-w-[18px] flex items-center justify-center rounded-full px-1 pointer-events-none shadow-sm">
+          {unreadCount > 99 ? "99+" : unreadCount}
+        </span>
+      )}
+    </div>
   );
 
   return (
