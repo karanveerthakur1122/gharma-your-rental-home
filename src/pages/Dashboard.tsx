@@ -4,8 +4,13 @@ import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, Edit, Trash2, Eye, EyeOff, Home, Clock, CheckCircle, XCircle, MessageSquare } from "lucide-react";
+import {
+  Plus, Edit, Trash2, Eye, EyeOff, Home, Clock, CheckCircle, XCircle,
+  MessageSquare, RefreshCw, MapPin, Calendar,
+} from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -25,34 +30,34 @@ interface PropertyWithImages {
   property_images: { image_url: string; display_order: number }[];
 }
 
-export default function Dashboard() {
-  const { user, role, loading: authLoading } = useAuth();
-  const navigate = useNavigate();
+interface Inquiry {
+  id: string;
+  message: string | null;
+  preferred_move_in: string | null;
+  status: string;
+  created_at: string;
+  property_id: string;
+  property_title?: string;
+}
+
+// ═══════════════════════════════════════════════
+// Properties Tab
+// ═══════════════════════════════════════════════
+function PropertiesTab({ user }: { user: any }) {
   const [properties, setProperties] = useState<PropertyWithImages[]>([]);
   const [inquiryCounts, setInquiryCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!authLoading && (!user || role !== "landlord")) {
-      navigate("/");
-    }
-  }, [user, role, authLoading]);
-
-  useEffect(() => {
-    if (user && role === "landlord") fetchData();
-  }, [user, role]);
-
-  const fetchData = async () => {
+  const load = async () => {
     setLoading(true);
     const { data } = await supabase
       .from("properties")
       .select("*, property_images(image_url, display_order)")
-      .eq("landlord_id", user!.id)
+      .eq("landlord_id", user.id)
       .order("created_at", { ascending: false });
     const props = (data ?? []) as PropertyWithImages[];
     setProperties(props);
 
-    // Fetch inquiry counts per property
     if (props.length > 0) {
       const { data: inquiries } = await supabase
         .from("inquiries")
@@ -67,6 +72,8 @@ export default function Dashboard() {
     setLoading(false);
   };
 
+  useEffect(() => { load(); }, [user]);
+
   const toggleVacancy = async (id: string, current: boolean) => {
     await supabase.from("properties").update({ is_vacant: !current }).eq("id", id);
     setProperties((prev) => prev.map((p) => (p.id === id ? { ...p, is_vacant: !current } : p)));
@@ -74,6 +81,16 @@ export default function Dashboard() {
   };
 
   const deleteProperty = async (id: string) => {
+    // Delete images from storage first
+    const { data: images } = await supabase.from("property_images").select("image_url").eq("property_id", id);
+    if (images) {
+      const paths = images.map((img) => {
+        const url = new URL(img.image_url);
+        const parts = url.pathname.split("/storage/v1/object/public/property-images/");
+        return parts[1] || "";
+      }).filter(Boolean);
+      if (paths.length > 0) await supabase.storage.from("property-images").remove(paths);
+    }
     const { error } = await supabase.from("properties").delete().eq("id", id);
     if (error) {
       toast({ title: "Error deleting property", description: error.message, variant: "destructive" });
@@ -92,29 +109,19 @@ export default function Dashboard() {
   const statusLabel = (status: string) => {
     if (status === "approved") return "Verified";
     if (status === "rejected") return "Rejected";
-    return "Pending Review";
+    return "Pending";
   };
 
-  if (authLoading || loading) return <div className="container py-20 text-center text-muted-foreground">Loading...</div>;
+  if (loading) return <div className="py-8 text-center text-muted-foreground">Loading properties...</div>;
 
   const approved = properties.filter((p) => p.status === "approved").length;
   const pending = properties.filter((p) => p.status === "pending").length;
   const vacant = properties.filter((p) => p.is_vacant).length;
 
   return (
-    <div className="container py-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Landlord Dashboard</h1>
-          <p className="text-muted-foreground text-sm">Manage your properties and listings</p>
-        </div>
-        <Button asChild>
-          <Link to="/properties/new"><Plus className="h-4 w-4 mr-1" />Add Property</Link>
-        </Button>
-      </div>
-
+    <div className="space-y-6">
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           { label: "Total", value: properties.length, icon: Home },
           { label: "Verified", value: approved, icon: CheckCircle },
@@ -165,8 +172,10 @@ export default function Dashboard() {
                           {p.is_vacant ? "Available" : "Occupied"}
                         </Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground">{p.city}{p.area ? `, ${p.area}` : ""}</p>
-                      <div className="flex items-center gap-3 mt-2 text-sm">
+                      <p className="text-sm text-muted-foreground flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />{p.city}{p.area ? `, ${p.area}` : ""}
+                      </p>
+                      <div className="flex items-center gap-3 mt-2 text-sm flex-wrap">
                         <span className="font-medium text-primary">NPR {Number(p.price).toLocaleString()}/mo</span>
                         <span className="flex items-center gap-1">{statusIcon(p.status)} {statusLabel(p.status)}</span>
                         {(inquiryCounts[p.id] ?? 0) > 0 && (
@@ -190,7 +199,7 @@ export default function Dashboard() {
                         <AlertDialogContent>
                           <AlertDialogHeader>
                             <AlertDialogTitle>Delete this property?</AlertDialogTitle>
-                            <AlertDialogDescription>This action cannot be undone. All images and inquiries for this property will also be deleted.</AlertDialogDescription>
+                            <AlertDialogDescription>This action cannot be undone. All images and inquiries will also be removed.</AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -206,6 +215,136 @@ export default function Dashboard() {
           })}
         </div>
       )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════
+// Inquiries Tab
+// ═══════════════════════════════════════════════
+function InquiriesTab({ user }: { user: any }) {
+  const [inquiries, setInquiries] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = async () => {
+    setLoading(true);
+    // Get landlord's properties first
+    const { data: props } = await supabase.from("properties").select("id, title").eq("landlord_id", user.id);
+    if (!props || props.length === 0) { setInquiries([]); setLoading(false); return; }
+
+    const propMap = new Map(props.map((p) => [p.id, p.title]));
+    const { data: inqs } = await supabase
+      .from("inquiries")
+      .select("*")
+      .in("property_id", props.map((p) => p.id))
+      .order("created_at", { ascending: false });
+
+    // Get tenant profiles for display
+    const tenantIds = [...new Set((inqs ?? []).map((i) => i.tenant_id))];
+    const { data: profiles } = tenantIds.length > 0
+      ? await supabase.from("profiles").select("user_id, full_name, phone").in("user_id", tenantIds)
+      : { data: [] };
+    const profileMap = new Map((profiles ?? []).map((p) => [p.user_id, p]));
+
+    setInquiries((inqs ?? []).map((i) => ({
+      ...i,
+      property_title: propMap.get(i.property_id) ?? "Unknown",
+      tenant_name: profileMap.get(i.tenant_id)?.full_name ?? "Unknown",
+      tenant_phone: profileMap.get(i.tenant_id)?.phone ?? null,
+    })));
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, [user]);
+
+  if (loading) return <div className="py-8 text-center text-muted-foreground">Loading inquiries...</div>;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold">Inquiries ({inquiries.length})</h2>
+        <Button variant="ghost" size="sm" onClick={load}><RefreshCw className="h-4 w-4 mr-1" />Refresh</Button>
+      </div>
+
+      {inquiries.length === 0 ? (
+        <Card className="p-10 text-center">
+          <MessageSquare className="h-10 w-10 mx-auto mb-3 text-muted-foreground opacity-50" />
+          <p className="font-medium">No inquiries yet</p>
+          <p className="text-sm text-muted-foreground">When tenants are interested in your properties, their messages will appear here.</p>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {inquiries.map((inq) => (
+            <Card key={inq.id}>
+              <CardContent className="p-4">
+                <div className="flex flex-col sm:flex-row sm:items-start gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <Badge variant="outline" className="text-xs">{inq.property_title}</Badge>
+                      <Badge variant={inq.status === "open" ? "default" : "secondary"} className="text-xs">
+                        {inq.status}
+                      </Badge>
+                    </div>
+                    <p className="font-medium text-sm">{inq.tenant_name}</p>
+                    {inq.tenant_phone && <p className="text-xs text-muted-foreground">{inq.tenant_phone}</p>}
+                    {inq.message && <p className="text-sm text-muted-foreground mt-2 whitespace-pre-wrap">{inq.message}</p>}
+                    <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" /> {new Date(inq.created_at).toLocaleDateString()}
+                      </span>
+                      {inq.preferred_move_in && (
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" /> Move-in: {new Date(inq.preferred_move_in).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════
+// Main Dashboard
+// ═══════════════════════════════════════════════
+export default function Dashboard() {
+  const { user, role, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!authLoading && (!user || role !== "landlord")) {
+      navigate("/");
+    }
+  }, [user, role, authLoading]);
+
+  if (authLoading) return <div className="container py-20 text-center text-muted-foreground">Loading...</div>;
+  if (!user || role !== "landlord") return null;
+
+  return (
+    <div className="container py-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold">Landlord Dashboard</h1>
+          <p className="text-muted-foreground text-sm">Manage your properties, listings, and inquiries</p>
+        </div>
+        <Button asChild>
+          <Link to="/properties/new"><Plus className="h-4 w-4 mr-1" />Add Property</Link>
+        </Button>
+      </div>
+
+      <Tabs defaultValue="properties" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="properties" className="gap-1"><Home className="h-4 w-4" />Properties</TabsTrigger>
+          <TabsTrigger value="inquiries" className="gap-1"><MessageSquare className="h-4 w-4" />Inquiries</TabsTrigger>
+        </TabsList>
+        <TabsContent value="properties"><PropertiesTab user={user} /></TabsContent>
+        <TabsContent value="inquiries"><InquiriesTab user={user} /></TabsContent>
+      </Tabs>
     </div>
   );
 }
