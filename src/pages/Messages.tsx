@@ -497,7 +497,7 @@ export default function MessagesPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete conversation?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete this conversation and all its messages. This action cannot be undone.
+              This will delete the conversation from <strong>both sides</strong> and all messages will be permanently removed. This action cannot be undone. You can <strong>archive</strong> the conversation instead to hide it from your inbox.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
