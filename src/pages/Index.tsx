@@ -41,24 +41,37 @@ function AnimatedCount({ target, suffix = "" }: { target: number; suffix?: strin
   );
 }
 
+interface FeaturedProperty {
+  id: string;
+  title: string;
+  city: string;
+  area: string | null;
+  price: number;
+  room_type: string;
+  property_images: { image_url: string; display_order: number }[];
+}
+
 const Index = () => {
   const [stats, setStats] = useState({ properties: 0, cities: 7, users: 0 });
+  const [featured, setFeatured] = useState<FeaturedProperty[]>([]);
 
   useEffect(() => {
     (async () => {
-      const [{ count: pCount }, { count: uCount }] = await Promise.all([
+      const [{ count: pCount }, { count: uCount }, { data: props }] = await Promise.all([
         supabase.from("properties").select("*", { count: "exact", head: true }).eq("status", "approved"),
         supabase.from("profiles").select("*", { count: "exact", head: true }),
+        supabase
+          .from("properties")
+          .select("id, title, city, area, price, room_type, property_images(image_url, display_order)")
+          .eq("status", "approved")
+          .eq("is_vacant", true)
+          .order("created_at", { ascending: false })
+          .limit(6),
       ]);
-      setStats((s) => ({
-        ...s,
-        properties: pCount ?? 0,
-        users: uCount ?? 0,
-      }));
+      setStats((s) => ({ ...s, properties: pCount ?? 0, users: uCount ?? 0 }));
+      setFeatured((props as FeaturedProperty[]) ?? []);
     })();
   }, []);
-
-  const sampleImages = Array.from({ length: 6 }, (_, i) => `/samples/room-${i + 1}.jpg`);
 
   return (
     <div className="flex flex-col">
@@ -131,26 +144,47 @@ const Index = () => {
               </Link>
             </Button>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {sampleImages.map((src, i) => (
-              <Link
-                key={i}
-                to="/search"
-                className="group relative aspect-[4/3] overflow-hidden rounded-xl border bg-muted"
-              >
-                <img
-                  src={src}
-                  alt={`Room ${i + 1}`}
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <span className="text-sm font-medium text-primary-foreground">Explore →</span>
-                  <Eye className="h-4 w-4 text-primary-foreground" />
-                </div>
-              </Link>
-            ))}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {(featured.length > 0 ? featured : []).map((p) => {
+              const img = p.property_images?.sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))[0]?.image_url;
+              return (
+                <Link
+                  key={p.id}
+                  to={`/property/${p.id}`}
+                  className="group relative overflow-hidden rounded-xl border bg-card shadow-sm hover:shadow-lg transition-shadow duration-300"
+                >
+                  <div className="aspect-[4/3] overflow-hidden bg-muted">
+                    <img
+                      src={img || "/placeholder.svg"}
+                      alt={p.title}
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-foreground/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <span className="absolute top-3 left-3 rounded-full bg-primary px-3 py-1 text-[11px] font-semibold text-primary-foreground uppercase tracking-wide">
+                      {p.room_type}
+                    </span>
+                  </div>
+                  <div className="p-4 flex flex-col gap-1">
+                    <h3 className="font-semibold text-sm line-clamp-1 group-hover:text-primary transition-colors">{p.title}</h3>
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <MapPin className="h-3 w-3" /> {p.city}{p.area ? `, ${p.area}` : ""}
+                    </p>
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="font-bold text-primary text-sm">NPR {Number(p.price).toLocaleString()}<span className="text-xs font-normal text-muted-foreground">/mo</span></span>
+                      <span className="text-xs text-muted-foreground group-hover:text-primary transition-colors flex items-center gap-1">
+                        View Details <ArrowRight className="h-3 w-3" />
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+            {featured.length === 0 && (
+              <div className="col-span-full text-center py-12 text-muted-foreground">
+                <p>No featured listings yet. Be the first to <Link to="/signup" className="text-primary underline">list a property</Link>!</p>
+              </div>
+            )}
           </div>
         </div>
       </section>
