@@ -6,9 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth";
 import { toast } from "@/hooks/use-toast";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import {
   MapPin, Wifi, Car, PawPrint, Droplets, Bath, Heart, ArrowLeft, Shield, Calendar, Sofa, Home, IndianRupee, ChevronLeft, ChevronRight, BedDouble, Users, UtensilsCrossed, Lock, Clock, DoorOpen,
@@ -23,9 +20,6 @@ export default function PropertyDetail() {
   const [images, setImages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFavorited, setIsFavorited] = useState(false);
-  const [inquiryMsg, setInquiryMsg] = useState("");
-  const [moveIn, setMoveIn] = useState("");
-  const [submitting, setSubmitting] = useState(false);
   const [activeImg, setActiveImg] = useState(0);
   const [landlordProfile, setLandlordProfile] = useState<any>(null);
 
@@ -78,20 +72,6 @@ export default function PropertyDetail() {
     }
   };
 
-  const submitInquiry = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) { toast({ title: "Please log in to submit an inquiry", variant: "destructive" }); return; }
-    setSubmitting(true);
-    const { error } = await supabase.from("inquiries").insert({
-      property_id: id!,
-      tenant_id: user.id,
-      message: inquiryMsg,
-      preferred_move_in: moveIn || null,
-    });
-    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-    else { toast({ title: "Inquiry sent successfully!" }); setInquiryMsg(""); setMoveIn(""); }
-    setSubmitting(false);
-  };
 
   if (loading) return (
     <div className="container py-20 text-center">
@@ -390,43 +370,6 @@ export default function PropertyDetail() {
             </CardContent>
           </Card>
 
-          {/* Inquiry form */}
-          {role === "tenant" && (
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">Interested? Send an Inquiry</CardTitle>
-                <p className="text-xs text-muted-foreground">The landlord will receive your message directly.</p>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={submitInquiry} className="space-y-3">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="inquiry-msg" className="text-xs font-medium">Your Message</Label>
-                    <Textarea
-                      id="inquiry-msg"
-                      value={inquiryMsg}
-                      onChange={(e) => setInquiryMsg(e.target.value)}
-                      placeholder="Hi, I'm interested in this property. Is it still available?"
-                      required
-                      rows={3}
-                      className="resize-none"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="move-in" className="text-xs font-medium">Preferred Move-in Date</Label>
-                    <Input
-                      id="move-in"
-                      type="date"
-                      value={moveIn}
-                      onChange={(e) => setMoveIn(e.target.value)}
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={submitting}>
-                    {submitting ? "Sending..." : "Send Inquiry"}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          )}
 
           {!user && (
             <Card className="bg-muted/50">

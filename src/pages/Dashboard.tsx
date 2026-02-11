@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
-import { ChatDialog } from "@/components/ChatDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -220,106 +218,6 @@ function PropertiesTab({ user }: { user: any }) {
   );
 }
 
-// ═══════════════════════════════════════════════
-// Inquiries Tab
-// ═══════════════════════════════════════════════
-function InquiriesTab({ user }: { user: any }) {
-  const [inquiries, setInquiries] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const load = async () => {
-    setLoading(true);
-    // Get landlord's properties first
-    const { data: props } = await supabase.from("properties").select("id, title").eq("landlord_id", user.id);
-    if (!props || props.length === 0) { setInquiries([]); setLoading(false); return; }
-
-    const propMap = new Map(props.map((p) => [p.id, p.title]));
-    const { data: inqs } = await supabase
-      .from("inquiries")
-      .select("*")
-      .in("property_id", props.map((p) => p.id))
-      .order("created_at", { ascending: false });
-
-    // Get tenant profiles for display
-    const tenantIds = [...new Set((inqs ?? []).map((i) => i.tenant_id))];
-    const { data: profiles } = tenantIds.length > 0
-      ? await supabase.from("profiles").select("user_id, full_name, phone").in("user_id", tenantIds)
-      : { data: [] };
-    const profileMap = new Map((profiles ?? []).map((p) => [p.user_id, p]));
-
-    setInquiries((inqs ?? []).map((i) => ({
-      ...i,
-      property_title: propMap.get(i.property_id) ?? "Unknown",
-      tenant_name: profileMap.get(i.tenant_id)?.full_name ?? "Unknown",
-      tenant_phone: profileMap.get(i.tenant_id)?.phone ?? null,
-    })));
-    setLoading(false);
-  };
-
-  useEffect(() => { load(); }, [user]);
-
-  if (loading) return <div className="py-8 text-center text-muted-foreground">Loading inquiries...</div>;
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Inquiries ({inquiries.length})</h2>
-        <Button variant="ghost" size="sm" onClick={load}><RefreshCw className="h-4 w-4 mr-1" />Refresh</Button>
-      </div>
-
-      {inquiries.length === 0 ? (
-        <Card className="p-10 text-center">
-          <MessageSquare className="h-10 w-10 mx-auto mb-3 text-muted-foreground opacity-50" />
-          <p className="font-medium">No inquiries yet</p>
-          <p className="text-sm text-muted-foreground">When tenants are interested in your properties, their messages will appear here.</p>
-        </Card>
-      ) : (
-        <div className="space-y-3">
-          {inquiries.map((inq) => (
-            <Card key={inq.id}>
-              <CardContent className="p-4">
-                <div className="flex flex-col sm:flex-row sm:items-start gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <Badge variant="outline" className="text-xs">{inq.property_title}</Badge>
-                      <Badge variant={inq.status === "open" ? "default" : "secondary"} className="text-xs">
-                        {inq.status}
-                      </Badge>
-                    </div>
-                    <p className="font-medium text-sm">{inq.tenant_name}</p>
-                    {inq.tenant_phone && <p className="text-xs text-muted-foreground">{inq.tenant_phone}</p>}
-                    {inq.message && <p className="text-sm text-muted-foreground mt-2 whitespace-pre-wrap">{inq.message}</p>}
-                    <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" /> {new Date(inq.created_at).toLocaleDateString()}
-                      </span>
-                      {inq.preferred_move_in && (
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" /> Move-in: {new Date(inq.preferred_move_in).toLocaleDateString()}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="shrink-0">
-                    <ChatDialog
-                      propertyId={inq.property_id}
-                      landlordId={user.id}
-                      propertyTitle={inq.property_title}
-                      tenantId={inq.tenant_id}
-                      triggerLabel="Reply"
-                      triggerVariant="outline"
-                      triggerSize="sm"
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 // ═══════════════════════════════════════════════
 // Main Dashboard
@@ -348,14 +246,7 @@ export default function Dashboard() {
         </Button>
       </div>
 
-      <Tabs defaultValue="properties" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="properties" className="gap-1"><Home className="h-4 w-4" />Properties</TabsTrigger>
-          <TabsTrigger value="inquiries" className="gap-1"><MessageSquare className="h-4 w-4" />Inquiries</TabsTrigger>
-        </TabsList>
-        <TabsContent value="properties"><PropertiesTab user={user} /></TabsContent>
-        <TabsContent value="inquiries"><InquiriesTab user={user} /></TabsContent>
-      </Tabs>
+      <PropertiesTab user={user} />
     </div>
   );
 }
