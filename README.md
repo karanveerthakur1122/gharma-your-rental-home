@@ -30,10 +30,15 @@ A modern rental property management platform for Nepal connecting landlords and 
 
 2. **Setup environment**
    
-   Create `.env` file:
+   Copy `.env.example` to `.env` and fill in your Supabase credentials:
+   ```bash
+   cp .env.example .env
+   ```
+   
+   Then edit `.env` with your actual values from [Supabase Dashboard](https://supabase.com/dashboard) → Project Settings → API:
    ```env
-   VITE_SUPABASE_URL=your_supabase_url
-   VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_key
+   VITE_SUPABASE_URL=https://your-project-id.supabase.co
+   VITE_SUPABASE_PUBLISHABLE_KEY=your_anon_key_here
    ```
 
 3. **Run migrations**
@@ -67,6 +72,13 @@ npm run test      # Run tests
 **Main Tables**: `profiles`, `user_roles`, `properties`, `property_images`, `favorites`, `inquiries`, `conversations`, `messages`
 
 All tables use Row Level Security (RLS) for data protection.
+
+## Security
+
+⚠️ **Important**: Never commit your `.env` file to version control. The `.env.example` file is provided as a template.
+
+- ✅ `.env.example` - Safe to commit (contains placeholders)
+- ❌ `.env` - Never commit (contains real credentials)
 
 ## License
 
