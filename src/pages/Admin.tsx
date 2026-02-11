@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
@@ -15,10 +16,14 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
 import {
   CheckCircle, XCircle, Clock, Users, Home, ShieldCheck, BarChart3, Eye,
-  Search, RefreshCw, MapPin, List,
+  Search, RefreshCw, MapPin, List, Trash2, Pencil, KeyRound,
 } from "lucide-react";
 
 // ═══════════════════════════════════════════════
@@ -276,7 +281,21 @@ function AllListings() {
 }
 
 // ═══════════════════════════════════════════════
-// User Management with Role Changing
+// Helper: call admin edge function
+// ═══════════════════════════════════════════════
+async function adminAction(body: Record<string, any>) {
+  const { data: { session } } = await supabase.auth.getSession();
+  const res = await supabase.functions.invoke("admin-manage-user", {
+    body,
+    headers: { Authorization: `Bearer ${session?.access_token}` },
+  });
+  if (res.error) throw new Error(res.error.message);
+  if (res.data?.error) throw new Error(res.data.error);
+  return res.data;
+}
+
+// ═══════════════════════════════════════════════
+// User Management with Role Changing, Edit, Delete, Password
 // ═══════════════════════════════════════════════
 function UserManagement() {
   const { user: currentUser } = useAuth();
@@ -285,6 +304,22 @@ function UserManagement() {
   const [roleFilter, setRoleFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [changingRole, setChangingRole] = useState<string | null>(null);
+
+  // Edit profile dialog
+  const [editUser, setEditUser] = useState<any | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editLoading, setEditLoading] = useState(false);
+
+  // Password dialog
+  const [passwordUser, setPasswordUser] = useState<any | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [passwordLoading, setPasswordLoading] = useState(false);
+
+  // Delete dialog
+  const [deleteUser, setDeleteUser] = useState<any | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -295,20 +330,13 @@ function UserManagement() {
       supabase.from("conversations").select("id, tenant_id, landlord_id"),
     ]);
     const roleMap = new Map((rolesRes.data ?? []).map((r: any) => [r.user_id, { role: r.role, roleId: r.id }]));
-
-    // Count properties per user
     const propCounts: Record<string, number> = {};
-    (propsRes.data ?? []).forEach((p: any) => {
-      propCounts[p.landlord_id] = (propCounts[p.landlord_id] || 0) + 1;
-    });
-
-    // Count conversations per user
+    (propsRes.data ?? []).forEach((p: any) => { propCounts[p.landlord_id] = (propCounts[p.landlord_id] || 0) + 1; });
     const convoCounts: Record<string, number> = {};
     (convosRes.data ?? []).forEach((c: any) => {
       convoCounts[c.tenant_id] = (convoCounts[c.tenant_id] || 0) + 1;
       convoCounts[c.landlord_id] = (convoCounts[c.landlord_id] || 0) + 1;
     });
-
     const merged = (profilesRes.data ?? []).map((p: any) => ({
       ...p,
       role: roleMap.get(p.user_id)?.role ?? "none",
@@ -334,6 +362,60 @@ function UserManagement() {
     toast({ title: `Role updated to ${newRole}` });
     await load();
     setChangingRole(null);
+  };
+
+  const openEditDialog = async (u: any) => {
+    setEditUser(u);
+    setEditName(u.full_name || "");
+    setEditPhone(u.phone || "");
+    setEditEmail("");
+    try {
+      const data = await adminAction({ action: "get_user_email", userId: u.user_id });
+      setEditEmail(data.email || "");
+    } catch { /* ignore */ }
+  };
+
+  const saveProfile = async () => {
+    if (!editUser) return;
+    setEditLoading(true);
+    try {
+      await adminAction({
+        action: "update_profile",
+        userId: editUser.user_id,
+        profileData: { full_name: editName, phone: editPhone },
+      });
+      toast({ title: "Profile updated successfully" });
+      setEditUser(null);
+      load();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally { setEditLoading(false); }
+  };
+
+  const handleChangePassword = async () => {
+    if (!passwordUser || !newPassword) return;
+    setPasswordLoading(true);
+    try {
+      await adminAction({ action: "change_password", userId: passwordUser.user_id, password: newPassword });
+      toast({ title: "Password changed successfully" });
+      setPasswordUser(null);
+      setNewPassword("");
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally { setPasswordLoading(false); }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!deleteUser) return;
+    setDeleteLoading(true);
+    try {
+      await adminAction({ action: "delete_user", userId: deleteUser.user_id });
+      toast({ title: "User deleted successfully" });
+      setDeleteUser(null);
+      load();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally { setDeleteLoading(false); }
   };
 
   const filtered = users.filter((u) => {
@@ -375,7 +457,7 @@ function UserManagement() {
               <TableHead>Current Role</TableHead>
               <TableHead>Change Role</TableHead>
               <TableHead>Joined</TableHead>
-              <TableHead></TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -390,12 +472,8 @@ function UserManagement() {
                     {isSelf && <Badge variant="outline" className="ml-2 text-xs">You</Badge>}
                   </TableCell>
                   <TableCell>{u.phone || "—"}</TableCell>
-                  <TableCell className="text-center">
-                    <span className="font-medium">{u.propertyCount}</span>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <span className="font-medium">{u.conversationCount}</span>
-                  </TableCell>
+                  <TableCell className="text-center"><span className="font-medium">{u.propertyCount}</span></TableCell>
+                  <TableCell className="text-center"><span className="font-medium">{u.conversationCount}</span></TableCell>
                   <TableCell>
                     <Badge variant={u.role === "admin" ? "default" : u.role === "landlord" ? "secondary" : u.role === "tenant" ? "outline" : "destructive"}>
                       {u.role}
@@ -405,11 +483,7 @@ function UserManagement() {
                     {isSelf ? (
                       <span className="text-xs text-muted-foreground">Can't change own role</span>
                     ) : (
-                      <Select
-                        value={u.role}
-                        onValueChange={(v) => changeRole(u.user_id, u.roleId, v)}
-                        disabled={changingRole === u.user_id}
-                      >
+                      <Select value={u.role} onValueChange={(v) => changeRole(u.user_id, u.roleId, v)} disabled={changingRole === u.user_id}>
                         <SelectTrigger className="h-8 w-28 text-xs"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="tenant">Tenant</SelectItem>
@@ -419,15 +493,24 @@ function UserManagement() {
                       </Select>
                     )}
                   </TableCell>
-                  <TableCell className="text-muted-foreground text-sm">
-                    {new Date(u.created_at).toLocaleDateString()}
-                  </TableCell>
+                  <TableCell className="text-muted-foreground text-sm">{new Date(u.created_at).toLocaleDateString()}</TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link to={`/user/${u.user_id}`}>
-                        <Eye className="h-4 w-4 mr-1" />Profile
-                      </Link>
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(u)} title="Edit profile">
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setPasswordUser(u); setNewPassword(""); }} title="Change password">
+                        <KeyRound className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                        <Link to={`/user/${u.user_id}`}><Eye className="h-4 w-4" /></Link>
+                      </Button>
+                      {!isSelf && (
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteUser(u)} title="Delete user">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               );
@@ -436,6 +519,82 @@ function UserManagement() {
         </Table>
       </Card>
       <p className="text-xs text-muted-foreground">Total: {filtered.length} users</p>
+
+      {/* Edit Profile Dialog */}
+      <Dialog open={!!editUser} onOpenChange={(o) => { if (!o) setEditUser(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Profile</DialogTitle>
+            <DialogDescription>Update user profile information</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Email (read-only)</Label>
+              <Input value={editEmail} disabled className="bg-muted" />
+            </div>
+            <div>
+              <Label>Full Name</Label>
+              <Input value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="Full name" />
+            </div>
+            <div>
+              <Label>Phone</Label>
+              <Input value={editPhone} onChange={(e) => setEditPhone(e.target.value)} placeholder="Phone number" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditUser(null)}>Cancel</Button>
+            <Button onClick={saveProfile} disabled={editLoading}>
+              {editLoading ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Change Password Dialog */}
+      <Dialog open={!!passwordUser} onOpenChange={(o) => { if (!o) { setPasswordUser(null); setNewPassword(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Change Password</DialogTitle>
+            <DialogDescription>
+              Set a new password for <span className="font-semibold">{passwordUser?.full_name || "this user"}</span>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>New Password</Label>
+              <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Minimum 6 characters" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setPasswordUser(null); setNewPassword(""); }}>Cancel</Button>
+            <Button onClick={handleChangePassword} disabled={passwordLoading || newPassword.length < 6}>
+              {passwordLoading ? "Changing..." : "Change Password"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete User Confirmation */}
+      <AlertDialog open={!!deleteUser} onOpenChange={(o) => { if (!o) setDeleteUser(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete User</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete <span className="font-semibold">{deleteUser?.full_name || "this user"}</span> and all their data including properties, messages, and profile. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteUser}
+              disabled={deleteLoading}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteLoading ? "Deleting..." : "Delete User"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
