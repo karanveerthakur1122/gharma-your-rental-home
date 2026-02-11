@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -288,13 +288,33 @@ function UserManagement() {
 
   const load = async () => {
     setLoading(true);
-    const { data: profiles } = await supabase.from("profiles").select("*");
-    const { data: roles } = await supabase.from("user_roles").select("*");
-    const roleMap = new Map((roles ?? []).map((r: any) => [r.user_id, { role: r.role, roleId: r.id }]));
-    const merged = (profiles ?? []).map((p: any) => ({
+    const [profilesRes, rolesRes, propsRes, convosRes] = await Promise.all([
+      supabase.from("profiles").select("*"),
+      supabase.from("user_roles").select("*"),
+      supabase.from("properties").select("id, landlord_id"),
+      supabase.from("conversations").select("id, tenant_id, landlord_id"),
+    ]);
+    const roleMap = new Map((rolesRes.data ?? []).map((r: any) => [r.user_id, { role: r.role, roleId: r.id }]));
+
+    // Count properties per user
+    const propCounts: Record<string, number> = {};
+    (propsRes.data ?? []).forEach((p: any) => {
+      propCounts[p.landlord_id] = (propCounts[p.landlord_id] || 0) + 1;
+    });
+
+    // Count conversations per user
+    const convoCounts: Record<string, number> = {};
+    (convosRes.data ?? []).forEach((c: any) => {
+      convoCounts[c.tenant_id] = (convoCounts[c.tenant_id] || 0) + 1;
+      convoCounts[c.landlord_id] = (convoCounts[c.landlord_id] || 0) + 1;
+    });
+
+    const merged = (profilesRes.data ?? []).map((p: any) => ({
       ...p,
       role: roleMap.get(p.user_id)?.role ?? "none",
       roleId: roleMap.get(p.user_id)?.roleId ?? null,
+      propertyCount: propCounts[p.user_id] || 0,
+      conversationCount: convoCounts[p.user_id] || 0,
     }));
     setUsers(merged);
     setLoading(false);
@@ -350,14 +370,17 @@ function UserManagement() {
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Phone</TableHead>
+              <TableHead>Properties</TableHead>
+              <TableHead>Conversations</TableHead>
               <TableHead>Current Role</TableHead>
               <TableHead>Change Role</TableHead>
               <TableHead>Joined</TableHead>
+              <TableHead></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.length === 0 ? (
-              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">No users found</TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">No users found</TableCell></TableRow>
             ) : filtered.map((u) => {
               const isSelf = u.user_id === currentUser?.id;
               return (
@@ -367,6 +390,12 @@ function UserManagement() {
                     {isSelf && <Badge variant="outline" className="ml-2 text-xs">You</Badge>}
                   </TableCell>
                   <TableCell>{u.phone || "—"}</TableCell>
+                  <TableCell className="text-center">
+                    <span className="font-medium">{u.propertyCount}</span>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <span className="font-medium">{u.conversationCount}</span>
+                  </TableCell>
                   <TableCell>
                     <Badge variant={u.role === "admin" ? "default" : u.role === "landlord" ? "secondary" : u.role === "tenant" ? "outline" : "destructive"}>
                       {u.role}
@@ -392,6 +421,13 @@ function UserManagement() {
                   </TableCell>
                   <TableCell className="text-muted-foreground text-sm">
                     {new Date(u.created_at).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>
+                    <Button variant="ghost" size="sm" asChild>
+                      <Link to={`/user/${u.user_id}`}>
+                        <Eye className="h-4 w-4 mr-1" />Profile
+                      </Link>
+                    </Button>
                   </TableCell>
                 </TableRow>
               );
