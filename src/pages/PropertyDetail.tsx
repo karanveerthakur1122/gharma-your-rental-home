@@ -14,6 +14,7 @@ import {
   MapPin, Wifi, Car, PawPrint, Droplets, Bath, Heart, ArrowLeft, Shield, Calendar, Sofa, Home, IndianRupee, ChevronLeft, ChevronRight, BedDouble, Users, UtensilsCrossed, Lock, Clock, DoorOpen,
 } from "lucide-react";
 import { ChatDialog } from "@/components/ChatDialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function PropertyDetail() {
   const { id } = useParams<{ id: string }>();
@@ -26,6 +27,7 @@ export default function PropertyDetail() {
   const [moveIn, setMoveIn] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [activeImg, setActiveImg] = useState(0);
+  const [landlordProfile, setLandlordProfile] = useState<any>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -42,6 +44,13 @@ export default function PropertyDetail() {
     if (data) {
       setProperty(data);
       setImages(data.property_images?.sort((a: any, b: any) => a.display_order - b.display_order) ?? []);
+      // Fetch landlord profile
+      const { data: lp } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, avatar_url, phone, created_at")
+        .eq("user_id", data.landlord_id)
+        .maybeSingle();
+      setLandlordProfile(lp);
     }
     setLoading(false);
   };
@@ -311,6 +320,30 @@ export default function PropertyDetail() {
 
         {/* Sidebar */}
         <div className="space-y-4">
+          {/* Landlord card */}
+          {landlordProfile && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Listed by</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Link to={`/user/${landlordProfile.user_id}`} className="flex items-center gap-3 group hover:opacity-80 transition-opacity">
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage src={landlordProfile.avatar_url ?? undefined} />
+                    <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                      {(landlordProfile.full_name ?? "U").split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-sm group-hover:text-primary transition-colors truncate">{landlordProfile.full_name || "Landlord"}</p>
+                    {landlordProfile.phone && <p className="text-xs text-muted-foreground">{landlordProfile.phone}</p>}
+                    <p className="text-xs text-muted-foreground">View profile →</p>
+                  </div>
+                </Link>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Price card */}
           <Card className="border-primary/20">
             <CardHeader className="pb-2">
