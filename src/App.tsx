@@ -12,6 +12,8 @@ import Signup from "./pages/Signup";
 import SearchPage from "./pages/Search";
 import PropertyDetail from "./pages/PropertyDetail";
 import Profile from "./pages/Profile";
+import Dashboard from "./pages/Dashboard";
+import PropertyForm from "./pages/PropertyForm";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +32,9 @@ const App = () => (
             <Route path="/search" element={<SearchPage />} />
             <Route path="/property/:id" element={<PropertyDetail />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/properties/new" element={<PropertyForm />} />
+            <Route path="/properties/:id/edit" element={<PropertyForm />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
