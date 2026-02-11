@@ -12,6 +12,12 @@ interface ChatDialogProps {
   propertyId: string;
   landlordId: string;
   propertyTitle: string;
+  tenantId?: string;
+  triggerLabel?: string;
+  triggerVariant?: "default" | "outline" | "secondary" | "ghost";
+  triggerSize?: "default" | "sm" | "icon";
+  defaultOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 interface Message {
@@ -23,7 +29,7 @@ interface Message {
   is_read: boolean;
 }
 
-export function ChatDialog({ propertyId, landlordId, propertyTitle }: ChatDialogProps) {
+export function ChatDialog({ propertyId, landlordId, propertyTitle, tenantId, triggerLabel, triggerVariant = "default", triggerSize = "default", defaultOpen, onOpenChange }: ChatDialogProps) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
@@ -87,10 +93,10 @@ export function ChatDialog({ propertyId, landlordId, propertyTitle }: ChatDialog
     if (!user) return;
     setLoading(true);
 
-    // Determine tenant_id based on who is opening the chat
     const isLandlord = user.id === landlordId;
+    const effectiveTenantId = tenantId || (isLandlord ? undefined : user.id);
 
-    // Find existing conversation for this property involving this user
+    // Find existing conversation for this property between these users
     let query = supabase
       .from("conversations")
       .select("*")
@@ -98,6 +104,7 @@ export function ChatDialog({ propertyId, landlordId, propertyTitle }: ChatDialog
 
     if (isLandlord) {
       query = query.eq("landlord_id", user.id);
+      if (effectiveTenantId) query = query.eq("tenant_id", effectiveTenantId);
     } else {
       query = query.eq("tenant_id", user.id);
     }
@@ -107,14 +114,32 @@ export function ChatDialog({ propertyId, landlordId, propertyTitle }: ChatDialog
     if (existing) {
       setConversationId(existing.id);
       await loadMessages(existing.id);
-    } else if (!isLandlord) {
-      // Create new conversation (only tenants can initiate)
+    } else if (!isLandlord && effectiveTenantId) {
+      // Tenant creates new conversation
       const { data: newConvo, error } = await supabase
         .from("conversations")
         .insert({
           property_id: propertyId,
           tenant_id: user.id,
           landlord_id: landlordId,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        toast({ title: "Error starting conversation", description: error.message, variant: "destructive" });
+      } else if (newConvo) {
+        setConversationId(newConvo.id);
+      }
+    } else if (isLandlord && effectiveTenantId) {
+      // Landlord replying to inquiry — create conversation on their behalf
+      // The tenant_id comes from the inquiry
+      const { data: newConvo, error } = await supabase
+        .from("conversations")
+        .insert({
+          property_id: propertyId,
+          tenant_id: effectiveTenantId,
+          landlord_id: user.id,
         })
         .select()
         .single();
@@ -172,12 +197,17 @@ export function ChatDialog({ propertyId, landlordId, propertyTitle }: ChatDialog
 
   if (!user) return null;
 
+  const handleOpenChange = (o: boolean) => {
+    setOpen(o);
+    onOpenChange?.(o);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button className="w-full" variant="default">
+        <Button className={triggerSize === "sm" ? "" : "w-full"} variant={triggerVariant} size={triggerSize}>
           <MessageCircle className="h-4 w-4 mr-2" />
-          Message Landlord
+          {triggerLabel || "Message Landlord"}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md flex flex-col h-[80vh] max-h-[600px] p-0">
