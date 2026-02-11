@@ -313,15 +313,15 @@ function InquiriesTab({ user }: { user: any }) {
 // Main Dashboard
 // ═══════════════════════════════════════════════
 export default function Dashboard() {
-  const { user, role, loading: authLoading } = useAuth();
+  const { user, role, loading: authLoading, roleLoading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!authLoading && user && role !== null && role !== "landlord") navigate("/");
+    if (!authLoading && !roleLoading && user && role !== "landlord") navigate("/");
     if (!authLoading && !user) navigate("/login");
-  }, [user, role, authLoading]);
+  }, [user, role, authLoading, roleLoading]);
 
-  if (authLoading || !role) return <div className="container py-20 text-center text-muted-foreground">Loading...</div>;
+  if (authLoading || roleLoading) return <div className="container py-20 text-center text-muted-foreground">Loading...</div>;
   if (!user || role !== "landlord") return null;
 
   return (
