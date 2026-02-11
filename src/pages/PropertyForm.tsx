@@ -56,7 +56,8 @@ export default function PropertyForm() {
   const [loadingData, setLoadingData] = useState(isEdit);
 
   useEffect(() => {
-    if (!authLoading && (!user || role !== "landlord")) navigate("/");
+    if (!authLoading && user && role !== null && role !== "landlord") navigate("/");
+    if (!authLoading && !user) navigate("/login");
   }, [user, role, authLoading]);
 
   useEffect(() => {

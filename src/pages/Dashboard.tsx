@@ -317,12 +317,11 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!authLoading && (!user || role !== "landlord")) {
-      navigate("/");
-    }
+    if (!authLoading && user && role !== null && role !== "landlord") navigate("/");
+    if (!authLoading && !user) navigate("/login");
   }, [user, role, authLoading]);
 
-  if (authLoading) return <div className="container py-20 text-center text-muted-foreground">Loading...</div>;
+  if (authLoading || !role) return <div className="container py-20 text-center text-muted-foreground">Loading...</div>;
   if (!user || role !== "landlord") return null;
 
   return (

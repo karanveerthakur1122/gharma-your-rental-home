@@ -13,6 +13,7 @@ import SearchPage from "./pages/Search";
 import PropertyDetail from "./pages/PropertyDetail";
 import Profile from "./pages/Profile";
 import Dashboard from "./pages/Dashboard";
+import TenantDashboard from "./pages/TenantDashboard";
 import PropertyForm from "./pages/PropertyForm";
 import AdminPanel from "./pages/Admin";
 
@@ -34,6 +35,8 @@ const App = () => (
             <Route path="/property/:id" element={<PropertyDetail />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/tenant" element={<TenantDashboard />} />
+            <Route path="/favorites" element={<TenantDashboard />} />
             <Route path="/properties/new" element={<PropertyForm />} />
             <Route path="/properties/:id/edit" element={<PropertyForm />} />
             <Route path="/admin" element={<AdminPanel />} />
