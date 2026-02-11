@@ -512,16 +512,16 @@ function Analytics() {
 // Main Admin Panel
 // ═══════════════════════════════════════════════
 export default function AdminPanel() {
-  const { user, role, loading: authLoading } = useAuth();
+  const { user, role, loading: authLoading, roleLoading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!authLoading && user && role !== null && role !== "admin") navigate("/");
+    if (!authLoading && !roleLoading && user && role !== "admin") navigate("/");
     if (!authLoading && !user) navigate("/login");
-  }, [user, role, authLoading]);
+  }, [user, role, authLoading, roleLoading]);
 
-  if (authLoading || !role) return <div className="container py-20 text-center text-muted-foreground">Loading...</div>;
-  if (role !== "admin") return null;
+  if (authLoading || roleLoading) return <div className="container py-20 text-center text-muted-foreground">Loading...</div>;
+  if (!user || role !== "admin") return null;
 
   return (
     <div className="container py-6">

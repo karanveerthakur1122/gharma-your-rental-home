@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+// Using roleLoading to prevent premature redirects
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,7 +47,7 @@ const defaultForm: FormData = {
 export default function PropertyForm() {
   const { id } = useParams<{ id: string }>();
   const isEdit = !!id;
-  const { user, role, loading: authLoading } = useAuth();
+  const { user, role, loading: authLoading, roleLoading } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState<FormData>(defaultForm);
   const [existingImages, setExistingImages] = useState<{ id: string; image_url: string; display_order: number }[]>([]);
@@ -56,9 +57,9 @@ export default function PropertyForm() {
   const [loadingData, setLoadingData] = useState(isEdit);
 
   useEffect(() => {
-    if (!authLoading && user && role !== null && role !== "landlord") navigate("/");
+    if (!authLoading && !roleLoading && user && role !== "landlord") navigate("/");
     if (!authLoading && !user) navigate("/login");
-  }, [user, role, authLoading]);
+  }, [user, role, authLoading, roleLoading]);
 
   useEffect(() => {
     if (isEdit && user) fetchProperty();

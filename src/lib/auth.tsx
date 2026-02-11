@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -9,9 +9,11 @@ interface AuthContextType {
   user: User | null;
   role: AppRole | null;
   loading: boolean;
+  roleLoading: boolean;
   signUp: (email: string, password: string, fullName: string, role: AppRole) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  refreshRole: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -21,15 +23,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
   const [loading, setLoading] = useState(true);
+  const [roleLoading, setRoleLoading] = useState(true);
 
-  const fetchRole = async (userId: string) => {
+  const fetchRole = useCallback(async (userId: string) => {
+    setRoleLoading(true);
     const { data } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", userId)
       .maybeSingle();
     setRole((data?.role as AppRole) ?? null);
-  };
+    setRoleLoading(false);
+  }, []);
+
+  const refreshRole = useCallback(async () => {
+    if (user) {
+      await fetchRole(user.id);
+    }
+  }, [user, fetchRole]);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -40,6 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setTimeout(() => fetchRole(session.user.id), 0);
         } else {
           setRole(null);
+          setRoleLoading(false);
         }
         setLoading(false);
       }
@@ -50,6 +62,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchRole(session.user.id);
+      } else {
+        setRoleLoading(false);
       }
       setLoading(false);
     });
@@ -82,7 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, role, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ session, user, role, loading, roleLoading, signUp, signIn, signOut, refreshRole }}>
       {children}
     </AuthContext.Provider>
   );
