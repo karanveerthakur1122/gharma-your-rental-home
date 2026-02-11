@@ -7,6 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { MapPin, Wifi, Car, PawPrint, Search as SearchIcon, List, Map } from "lucide-react";
+import { lazy, Suspense } from "react";
+
+const PropertyMap = lazy(() => import("@/components/PropertyMap"));
 
 interface Property {
   id: string;
@@ -127,13 +130,9 @@ export default function SearchPage() {
           ))}
         </div>
       ) : (
-        <div className="rounded-lg border bg-muted/50 h-[500px] flex items-center justify-center text-muted-foreground">
-          <div className="text-center">
-            <Map className="h-12 w-12 mx-auto mb-2 opacity-50" />
-            <p>Map view coming soon</p>
-            <p className="text-xs">Leaflet integration will be added next</p>
-          </div>
-        </div>
+        <Suspense fallback={<div className="h-[500px] flex items-center justify-center text-muted-foreground">Loading map...</div>}>
+          <PropertyMap properties={filtered} />
+        </Suspense>
       )}
     </div>
   );
