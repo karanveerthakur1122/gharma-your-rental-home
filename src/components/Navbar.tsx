@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
-import { Home, Heart, Plus, LogOut, User, Shield, Menu, X, LayoutDashboard } from "lucide-react";
+import { Home, Heart, Plus, LogOut, User, Shield, Menu, X, LayoutDashboard, MessageCircle } from "lucide-react";
 import { useState } from "react";
 
 export function Navbar() {
@@ -30,6 +30,9 @@ export function Navbar() {
                 <Link to={dashboardLink}>
                   <LayoutDashboard className="h-4 w-4 mr-1" />{dashboardLabel}
                 </Link>
+              </Button>
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/messages"><MessageCircle className="h-4 w-4 mr-1" />Messages</Link>
               </Button>
               {role === "tenant" && (
                 <Button variant="ghost" size="sm" asChild>
@@ -76,6 +79,9 @@ export function Navbar() {
             <>
               <Button variant="ghost" size="sm" asChild onClick={() => setMobileOpen(false)}>
                 <Link to={dashboardLink}>{dashboardLabel}</Link>
+              </Button>
+              <Button variant="ghost" size="sm" asChild onClick={() => setMobileOpen(false)}>
+                <Link to="/messages">Messages</Link>
               </Button>
               {role === "tenant" && (
                 <Button variant="ghost" size="sm" asChild onClick={() => setMobileOpen(false)}>
