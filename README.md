@@ -1,73 +1,77 @@
-# Welcome to your Lovable project
+# GharKhoj Nepal 🏠
 
-## Project info
+A modern rental property management platform for Nepal connecting landlords and tenants.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Features
 
-## How can I edit this code?
+- 🔍 **Property Search** - Browse rentals with filters (city, room type, price) and interactive map view
+- 💬 **Real-time Chat** - Direct messaging between tenants and landlords
+- ❤️ **Favorites** - Save and track preferred properties
+- 🏢 **Landlord Dashboard** - Manage listings, view inquiries, track messages
+- 👤 **Tenant Dashboard** - Saved properties, inquiry tracking, messaging inbox
+- 🛡️ **Admin Panel** - Property verification and user management
+- 📱 **Responsive Design** - Works seamlessly on mobile and desktop
 
-There are several ways of editing your application.
+## Tech Stack
 
-**Use Lovable**
+- **Frontend**: React, TypeScript, Tailwind CSS, shadcn/ui
+- **Backend**: Supabase (PostgreSQL, Auth, Storage, Realtime)
+- **Maps**: Leaflet
+- **Build Tool**: Vite
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## Quick Start
 
-Changes made via Lovable will be committed automatically to this repo.
+1. **Clone and install**
+   ```bash
+   git clone <YOUR_GIT_URL>
+   cd gharma-your-rental-home
+   npm install
+   ```
 
-**Use your preferred IDE**
+2. **Setup environment**
+   
+   Create `.env` file:
+   ```env
+   VITE_SUPABASE_URL=your_supabase_url
+   VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_key
+   ```
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+3. **Run migrations**
+   
+   Execute SQL files in `supabase/migrations/` in your Supabase project
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+4. **Start development**
+   ```bash
+   npm run dev
+   ```
+   
+   Open http://localhost:8080
 
-Follow these steps:
+## User Roles
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+- **Tenant**: Search properties, save favorites, send inquiries, chat with landlords
+- **Landlord**: Create listings, manage properties, respond to inquiries
+- **Admin**: Verify properties, manage users
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## Scripts
 
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```bash
+npm run dev       # Start dev server
+npm run build     # Build for production
+npm run preview   # Preview production build
+npm run test      # Run tests
 ```
 
-**Edit a file directly in GitHub**
+## Database Schema
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+**Main Tables**: `profiles`, `user_roles`, `properties`, `property_images`, `favorites`, `inquiries`, `conversations`, `messages`
 
-**Use GitHub Codespaces**
+All tables use Row Level Security (RLS) for data protection.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## License
 
-## What technologies are used for this project?
+Private and proprietary
 
-This project is built with:
+---
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Built with ❤️ for Nepal's rental market
