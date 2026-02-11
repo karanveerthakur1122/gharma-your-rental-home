@@ -16,6 +16,7 @@ import Dashboard from "./pages/Dashboard";
 import TenantDashboard from "./pages/TenantDashboard";
 import PropertyForm from "./pages/PropertyForm";
 import AdminPanel from "./pages/Admin";
+import MessagesPage from "./pages/Messages";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="/properties/new" element={<PropertyForm />} />
             <Route path="/properties/:id/edit" element={<PropertyForm />} />
             <Route path="/admin" element={<AdminPanel />} />
+            <Route path="/messages" element={<MessagesPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
