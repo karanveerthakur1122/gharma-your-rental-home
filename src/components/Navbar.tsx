@@ -1,12 +1,15 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
-import { Home, Heart, Plus, LogOut, User, Shield, Menu, X } from "lucide-react";
+import { Home, Heart, Plus, LogOut, User, Shield, Menu, X, LayoutDashboard } from "lucide-react";
 import { useState } from "react";
 
 export function Navbar() {
   const { user, role, signOut } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const dashboardLink = role === "admin" ? "/admin" : role === "landlord" ? "/dashboard" : "/tenant";
+  const dashboardLabel = role === "admin" ? "Admin" : role === "landlord" ? "Dashboard" : "My Dashboard";
 
   return (
     <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -17,30 +20,25 @@ export function Navbar() {
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-2">
+        <nav className="hidden md:flex items-center gap-1">
           <Button variant="ghost" size="sm" asChild>
             <Link to="/search">Browse</Link>
           </Button>
           {user ? (
             <>
+              <Button variant="ghost" size="sm" asChild>
+                <Link to={dashboardLink}>
+                  <LayoutDashboard className="h-4 w-4 mr-1" />{dashboardLabel}
+                </Link>
+              </Button>
               {role === "tenant" && (
                 <Button variant="ghost" size="sm" asChild>
                   <Link to="/favorites"><Heart className="h-4 w-4 mr-1" />Favorites</Link>
                 </Button>
               )}
               {role === "landlord" && (
-                <>
-                  <Button variant="ghost" size="sm" asChild>
-                    <Link to="/dashboard">Dashboard</Link>
-                  </Button>
-                  <Button variant="ghost" size="sm" asChild>
-                    <Link to="/properties/new"><Plus className="h-4 w-4 mr-1" />List Property</Link>
-                  </Button>
-                </>
-              )}
-              {role === "admin" && (
                 <Button variant="ghost" size="sm" asChild>
-                  <Link to="/admin"><Shield className="h-4 w-4 mr-1" />Admin</Link>
+                  <Link to="/properties/new"><Plus className="h-4 w-4 mr-1" />List Property</Link>
                 </Button>
               )}
               <Button variant="ghost" size="sm" asChild>
@@ -76,24 +74,17 @@ export function Navbar() {
           </Button>
           {user ? (
             <>
+              <Button variant="ghost" size="sm" asChild onClick={() => setMobileOpen(false)}>
+                <Link to={dashboardLink}>{dashboardLabel}</Link>
+              </Button>
               {role === "tenant" && (
                 <Button variant="ghost" size="sm" asChild onClick={() => setMobileOpen(false)}>
                   <Link to="/favorites">Favorites</Link>
                 </Button>
               )}
               {role === "landlord" && (
-                <>
-                  <Button variant="ghost" size="sm" asChild onClick={() => setMobileOpen(false)}>
-                    <Link to="/dashboard">Dashboard</Link>
-                  </Button>
-                  <Button variant="ghost" size="sm" asChild onClick={() => setMobileOpen(false)}>
-                    <Link to="/properties/new">List Property</Link>
-                  </Button>
-                </>
-              )}
-              {role === "admin" && (
                 <Button variant="ghost" size="sm" asChild onClick={() => setMobileOpen(false)}>
-                  <Link to="/admin">Admin</Link>
+                  <Link to="/properties/new">List Property</Link>
                 </Button>
               )}
               <Button variant="ghost" size="sm" asChild onClick={() => setMobileOpen(false)}>

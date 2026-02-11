@@ -516,10 +516,11 @@ export default function AdminPanel() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!authLoading && (!user || role !== "admin")) navigate("/");
+    if (!authLoading && user && role !== null && role !== "admin") navigate("/");
+    if (!authLoading && !user) navigate("/login");
   }, [user, role, authLoading]);
 
-  if (authLoading) return <div className="container py-20 text-center text-muted-foreground">Loading...</div>;
+  if (authLoading || !role) return <div className="container py-20 text-center text-muted-foreground">Loading...</div>;
   if (role !== "admin") return null;
 
   return (
