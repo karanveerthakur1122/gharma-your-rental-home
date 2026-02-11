@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import {
-  User, Mail, Phone, Calendar, Shield, Home, MessageSquare, Heart, Camera, Save, Loader2,
+  User, Mail, Phone, Calendar, Shield, Home, MessageSquare, Heart, Camera, Save, Loader2, ExternalLink, Lock, Eye, EyeOff,
 } from "lucide-react";
 
 export default function Profile() {
@@ -133,12 +133,19 @@ export default function Profile() {
           </div>
 
           {/* Name and role */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-2xl font-bold">{fullName || "Set your name"}</h1>
-            <Badge variant={role === "admin" ? "default" : role === "landlord" ? "secondary" : "outline"} className="capitalize">
-              {role === "admin" && <Shield className="h-3 w-3 mr-1" />}
-              {role ?? "user"}
-            </Badge>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-2xl font-bold">{fullName || "Set your name"}</h1>
+              <Badge variant={role === "admin" ? "default" : role === "landlord" ? "secondary" : "outline"} className="capitalize">
+                {role === "admin" && <Shield className="h-3 w-3 mr-1" />}
+                {role ?? "user"}
+              </Badge>
+            </div>
+            <Button variant="outline" size="sm" asChild>
+              <Link to={`/user/${user.id}`}>
+                <ExternalLink className="h-3.5 w-3.5 mr-1.5" />View Public Profile
+              </Link>
+            </Button>
           </div>
 
           {/* Contact info */}
@@ -216,6 +223,102 @@ export default function Profile() {
           </Button>
         </CardContent>
       </Card>
+
+      {/* Change Password */}
+      <ChangePasswordCard />
     </div>
+  );
+}
+
+function ChangePasswordCard() {
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleChangePassword = async () => {
+    if (newPassword.length < 6) {
+      toast({ title: "Password too short", description: "Must be at least 6 characters", variant: "destructive" });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast({ title: "Passwords don't match", variant: "destructive" });
+      return;
+    }
+    setLoading(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Password updated successfully!" });
+      setNewPassword("");
+      setConfirmPassword("");
+    }
+    setLoading(false);
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <Lock className="h-5 w-5" /> Change Password
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="newPassword">New Password</Label>
+          <div className="relative">
+            <Input
+              id="newPassword"
+              type={showNew ? "text" : "password"}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Enter new password"
+            />
+            <button
+              type="button"
+              onClick={() => setShowNew(!showNew)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="confirmPassword">Confirm New Password</Label>
+          <div className="relative">
+            <Input
+              id="confirmPassword"
+              type={showConfirm ? "text" : "password"}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirm new password"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirm(!showConfirm)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
+        </div>
+        {newPassword && newPassword.length < 6 && (
+          <p className="text-xs text-destructive">Password must be at least 6 characters</p>
+        )}
+        {confirmPassword && newPassword !== confirmPassword && (
+          <p className="text-xs text-destructive">Passwords don't match</p>
+        )}
+        <Button
+          onClick={handleChangePassword}
+          disabled={loading || !newPassword || !confirmPassword}
+          variant="secondary"
+          className="w-full"
+        >
+          {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Updating...</> : <><Lock className="h-4 w-4 mr-2" />Update Password</>}
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
