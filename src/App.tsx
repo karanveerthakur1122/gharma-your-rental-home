@@ -14,6 +14,7 @@ import PropertyDetail from "./pages/PropertyDetail";
 import Profile from "./pages/Profile";
 import Dashboard from "./pages/Dashboard";
 import PropertyForm from "./pages/PropertyForm";
+import AdminPanel from "./pages/Admin";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/properties/new" element={<PropertyForm />} />
             <Route path="/properties/:id/edit" element={<PropertyForm />} />
+            <Route path="/admin" element={<AdminPanel />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
