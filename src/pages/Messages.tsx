@@ -5,9 +5,25 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { MessageCircle, Send, Loader2, ArrowLeft, Home } from "lucide-react";
+import { MessageCircle, Send, Loader2, ArrowLeft, Home, MoreVertical, Trash2, Archive, ArchiveRestore } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Link, useNavigate } from "react-router-dom";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Conversation {
   id: string;
@@ -15,6 +31,8 @@ interface Conversation {
   tenant_id: string;
   landlord_id: string;
   updated_at: string;
+  archived_by_tenant: boolean;
+  archived_by_landlord: boolean;
   property?: { title: string; city: string; property_images: { image_url: string; display_order: number }[] };
   other_name?: string;
   last_message?: string;
@@ -41,11 +59,18 @@ export default function MessagesPage() {
   const [msgsLoading, setMsgsLoading] = useState(false);
   const [newMsg, setNewMsg] = useState("");
   const [sending, setSending] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Conversation | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = useCallback(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
+
+  const isArchived = useCallback((c: Conversation) => {
+    if (!user) return false;
+    return c.tenant_id === user.id ? c.archived_by_tenant : c.archived_by_landlord;
+  }, [user]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -113,7 +138,6 @@ export default function MessagesPage() {
 
     if (!convos) { setLoading(false); return; }
 
-    // Get last message + unread count for each
     const enriched = await Promise.all(
       (convos as any[]).map(async (c) => {
         const otherId = c.tenant_id === user.id ? c.landlord_id : c.tenant_id;
@@ -152,7 +176,6 @@ export default function MessagesPage() {
     setMessages((data as Message[]) ?? []);
     setTimeout(scrollToBottom, 100);
 
-    // Mark all unread as read
     await supabase
       .from("messages")
       .update({ is_read: true })
@@ -186,6 +209,64 @@ export default function MessagesPage() {
     setSending(false);
   };
 
+  const toggleArchive = async (convo: Conversation, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (!user) return;
+    const field = convo.tenant_id === user.id ? "archived_by_tenant" : "archived_by_landlord";
+    const currentlyArchived = convo.tenant_id === user.id ? convo.archived_by_tenant : convo.archived_by_landlord;
+
+    const { error } = await supabase
+      .from("conversations")
+      .update({ [field]: !currentlyArchived })
+      .eq("id", convo.id);
+
+    if (error) {
+      toast({ title: "Failed to update", variant: "destructive" });
+      return;
+    }
+
+    setConversations((prev) =>
+      prev.map((c) => c.id === convo.id ? { ...c, [field]: !currentlyArchived } : c)
+    );
+
+    if (activeConvo?.id === convo.id) setActiveConvo(null);
+    toast({ title: currentlyArchived ? "Conversation unarchived" : "Conversation archived" });
+  };
+
+  const deleteConversation = async () => {
+    if (!deleteTarget || !user) return;
+
+    // Delete all messages first, then the conversation
+    const { error: msgErr } = await supabase
+      .from("messages")
+      .delete()
+      .eq("conversation_id", deleteTarget.id);
+
+    if (msgErr) {
+      toast({ title: "Failed to delete messages", variant: "destructive" });
+      setDeleteTarget(null);
+      return;
+    }
+
+    const { error } = await supabase
+      .from("conversations")
+      .delete()
+      .eq("id", deleteTarget.id);
+
+    if (error) {
+      toast({ title: "Failed to delete conversation", variant: "destructive" });
+    } else {
+      setConversations((prev) => prev.filter((c) => c.id !== deleteTarget.id));
+      if (activeConvo?.id === deleteTarget.id) setActiveConvo(null);
+      toast({ title: "Conversation deleted" });
+    }
+    setDeleteTarget(null);
+  };
+
+  const filteredConversations = conversations.filter((c) =>
+    showArchived ? isArchived(c) : !isArchived(c)
+  );
+
   if (authLoading || loading) {
     return (
       <div className="container py-20 text-center">
@@ -205,36 +286,56 @@ export default function MessagesPage() {
   return (
     <div className="container py-4 h-[calc(100vh-3.5rem)]">
       <div className="flex h-full border rounded-xl overflow-hidden bg-card">
-        {/* Sidebar - conversation list */}
+        {/* Sidebar */}
         <div className={`w-full md:w-80 lg:w-96 border-r flex flex-col shrink-0 ${activeConvo ? "hidden md:flex" : "flex"}`}>
-          <div className="p-4 border-b">
+          <div className="p-4 border-b flex items-center justify-between">
             <h1 className="text-lg font-bold flex items-center gap-2">
               <MessageCircle className="h-5 w-5 text-primary" />
               Messages
             </h1>
+            <Button
+              variant={showArchived ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setShowArchived(!showArchived)}
+              className="gap-1.5"
+            >
+              <Archive className="h-4 w-4" />
+              {showArchived ? "Inbox" : "Archived"}
+            </Button>
           </div>
 
-          {conversations.length === 0 ? (
+          {filteredConversations.length === 0 ? (
             <div className="flex-1 flex items-center justify-center p-6">
               <div className="text-center">
-                <MessageCircle className="h-12 w-12 mx-auto mb-3 text-muted-foreground/40" />
-                <p className="font-medium text-foreground">No conversations yet</p>
-                <p className="text-sm text-muted-foreground mt-1">Start chatting from a property listing</p>
-                <Button variant="outline" size="sm" className="mt-3" asChild>
-                  <Link to="/search">Browse Properties</Link>
-                </Button>
+                {showArchived ? (
+                  <>
+                    <Archive className="h-12 w-12 mx-auto mb-3 text-muted-foreground/40" />
+                    <p className="font-medium text-foreground">No archived conversations</p>
+                    <p className="text-sm text-muted-foreground mt-1">Archived chats will appear here</p>
+                  </>
+                ) : (
+                  <>
+                    <MessageCircle className="h-12 w-12 mx-auto mb-3 text-muted-foreground/40" />
+                    <p className="font-medium text-foreground">No conversations yet</p>
+                    <p className="text-sm text-muted-foreground mt-1">Start chatting from a property listing</p>
+                    <Button variant="outline" size="sm" className="mt-3" asChild>
+                      <Link to="/search">Browse Properties</Link>
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           ) : (
             <ScrollArea className="flex-1">
-              {conversations.map((convo) => {
+              {filteredConversations.map((convo) => {
                 const img = propertyImg(convo);
                 const isActive = activeConvo?.id === convo.id;
+                const archived = isArchived(convo);
                 return (
-                  <button
+                  <div
                     key={convo.id}
+                    className={`relative group w-full text-left p-3 flex gap-3 border-b transition-colors hover:bg-accent/50 cursor-pointer ${isActive ? "bg-accent" : ""}`}
                     onClick={() => openConversation(convo)}
-                    className={`w-full text-left p-3 flex gap-3 border-b transition-colors hover:bg-accent/50 ${isActive ? "bg-accent" : ""}`}
                   >
                     {/* Property thumbnail */}
                     <div className="h-12 w-12 rounded-lg bg-muted shrink-0 overflow-hidden">
@@ -250,18 +351,40 @@ export default function MessagesPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
                         <p className="font-medium text-sm truncate">{convo.other_name}</p>
-                        {convo.unread_count! > 0 && (
-                          <Badge className="bg-primary text-primary-foreground text-[10px] h-5 min-w-5 flex items-center justify-center rounded-full px-1.5">
-                            {convo.unread_count}
-                          </Badge>
-                        )}
+                        <div className="flex items-center gap-1">
+                          {convo.unread_count! > 0 && (
+                            <Badge className="bg-primary text-primary-foreground text-[10px] h-5 min-w-5 flex items-center justify-center rounded-full px-1.5">
+                              {convo.unread_count}
+                            </Badge>
+                          )}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                              <DropdownMenuItem onClick={(e) => toggleArchive(convo, e as any)}>
+                                {archived ? <ArchiveRestore className="h-4 w-4 mr-2" /> : <Archive className="h-4 w-4 mr-2" />}
+                                {archived ? "Unarchive" : "Archive"}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onClick={(e) => { e.stopPropagation(); setDeleteTarget(convo); }}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </div>
                       <p className="text-xs text-muted-foreground truncate">{convo.property?.title}</p>
                       {convo.last_message && (
                         <p className="text-xs text-muted-foreground truncate mt-0.5">{convo.last_message}</p>
                       )}
                     </div>
-                  </button>
+                  </div>
                 );
               })}
             </ScrollArea>
@@ -273,16 +396,38 @@ export default function MessagesPage() {
           {activeConvo ? (
             <>
               {/* Chat header */}
-              <div className="p-3 border-b flex items-center gap-3">
-                <Button variant="ghost" size="icon" className="md:hidden shrink-0" onClick={() => setActiveConvo(null)}>
-                  <ArrowLeft className="h-5 w-5" />
-                </Button>
-                <div className="min-w-0">
-                  <p className="font-medium text-sm truncate">{activeConvo.other_name}</p>
-                  <Link to={`/property/${activeConvo.property_id}`} className="text-xs text-primary hover:underline truncate block">
-                    {activeConvo.property?.title} — {activeConvo.property?.city}
-                  </Link>
+              <div className="p-3 border-b flex items-center gap-3 justify-between">
+                <div className="flex items-center gap-3 min-w-0">
+                  <Button variant="ghost" size="icon" className="md:hidden shrink-0" onClick={() => setActiveConvo(null)}>
+                    <ArrowLeft className="h-5 w-5" />
+                  </Button>
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm truncate">{activeConvo.other_name}</p>
+                    <Link to={`/property/${activeConvo.property_id}`} className="text-xs text-primary hover:underline truncate block">
+                      {activeConvo.property?.title} — {activeConvo.property?.city}
+                    </Link>
+                  </div>
                 </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="shrink-0">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => toggleArchive(activeConvo)}>
+                      {isArchived(activeConvo) ? <ArchiveRestore className="h-4 w-4 mr-2" /> : <Archive className="h-4 w-4 mr-2" />}
+                      {isArchived(activeConvo) ? "Unarchive" : "Archive"}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onClick={() => setDeleteTarget(activeConvo)}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
 
               {/* Messages */}
@@ -345,6 +490,24 @@ export default function MessagesPage() {
           )}
         </div>
       </div>
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete conversation?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this conversation and all its messages. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={deleteConversation} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

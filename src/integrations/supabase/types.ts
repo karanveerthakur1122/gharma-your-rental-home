@@ -16,6 +16,8 @@ export type Database = {
     Tables: {
       conversations: {
         Row: {
+          archived_by_landlord: boolean
+          archived_by_tenant: boolean
           created_at: string
           id: string
           landlord_id: string
@@ -24,6 +26,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archived_by_landlord?: boolean
+          archived_by_tenant?: boolean
           created_at?: string
           id?: string
           landlord_id: string
@@ -32,6 +36,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archived_by_landlord?: boolean
+          archived_by_tenant?: boolean
           created_at?: string
           id?: string
           landlord_id?: string
