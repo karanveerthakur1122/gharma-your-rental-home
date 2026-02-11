@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import {
   MapPin, Wifi, Car, PawPrint, Droplets, Bath, Heart, ArrowLeft, Shield, Calendar, Sofa, Home, IndianRupee, ChevronLeft, ChevronRight,
 } from "lucide-react";
+import { ChatDialog } from "@/components/ChatDialog";
 
 export default function PropertyDetail() {
   const { id } = useParams<{ id: string }>();
@@ -289,6 +290,13 @@ export default function PropertyDetail() {
                 <Heart className={`h-4 w-4 mr-2 ${isFavorited ? "fill-destructive text-destructive" : ""}`} />
                 {isFavorited ? "Saved" : "Save to Favorites"}
               </Button>
+              {user && property.landlord_id && (
+                <ChatDialog
+                  propertyId={property.id}
+                  landlordId={property.landlord_id}
+                  propertyTitle={property.title}
+                />
+              )}
             </CardContent>
           </Card>
 
