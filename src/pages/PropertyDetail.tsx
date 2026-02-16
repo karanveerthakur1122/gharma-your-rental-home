@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { ChatDialog } from "@/components/ChatDialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { SEOHead } from "@/components/SEOHead";
 
 export default function PropertyDetail() {
   const { id } = useParams<{ id: string }>();
@@ -104,7 +105,13 @@ export default function PropertyDetail() {
   ];
 
   return (
-    <div className="container py-6 max-w-5xl">
+    <main className="container py-6 max-w-5xl">
+      <SEOHead
+        title={`${property.title} — ${property.city}`}
+        description={`${property.room_type.toUpperCase()} for rent in ${property.city}${property.area ? `, ${property.area}` : ""}. NPR ${Number(property.price).toLocaleString()}/mo. ${property.description?.slice(0, 80) || "Verified listing on GharKhoj Nepal."}`}
+        canonical={`https://gharkhoj.com.np/property/${property.id}`}
+        type="article"
+      />
       {/* Back link */}
       <Link
         to="/search"
@@ -383,6 +390,6 @@ export default function PropertyDetail() {
           )}
         </div>
       </div>
-    </div>
+    </main>
   );
 }

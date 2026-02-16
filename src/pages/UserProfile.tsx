@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import {
   User, MapPin, Phone, Calendar, Home, MessageSquare, Users, ArrowLeft, Shield, Heart,
 } from "lucide-react";
+import { SEOHead } from "@/components/SEOHead";
 
 interface ProfileData {
   user_id: string;
@@ -110,7 +111,11 @@ export default function UserProfile() {
   const roleBadge = role === "admin" ? "default" : role === "landlord" ? "secondary" : "outline";
 
   return (
-    <div className="container py-6 max-w-4xl">
+    <main className="container py-6 max-w-4xl">
+      <SEOHead
+        title={`${profile.full_name || "User"} — Profile`}
+        description={`View ${profile.full_name || "user"}'s profile on GharKhoj Nepal. ${properties.length} listed properties.`}
+      />
       <Link
         to="/search"
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
@@ -209,6 +214,6 @@ export default function UserProfile() {
           <p className="font-medium">No properties listed yet</p>
         </Card>
       )}
-    </div>
+    </main>
   );
 }

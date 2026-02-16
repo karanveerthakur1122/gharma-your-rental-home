@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useAuth } from "@/lib/auth";
 import { toast } from "@/hooks/use-toast";
 import { Home } from "lucide-react";
+import { SEOHead } from "@/components/SEOHead";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -29,7 +30,12 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center p-4">
+    <main className="min-h-[80vh] flex items-center justify-center p-4">
+      <SEOHead
+        title="Log In"
+        description="Sign in to your GharKhoj Nepal account to manage properties, favorites, and messages."
+        canonical="https://gharkhoj.com.np/login"
+      />
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <Link to="/" className="inline-flex items-center justify-center gap-2 text-primary font-bold text-xl mb-2">
@@ -58,6 +64,6 @@ export default function Login() {
           </p>
         </CardContent>
       </Card>
-    </div>
+    </main>
   );
 }

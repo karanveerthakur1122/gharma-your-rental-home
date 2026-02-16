@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/auth";
 import { toast } from "@/hooks/use-toast";
 import { Home, User, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SEOHead } from "@/components/SEOHead";
 
 type AppRole = "tenant" | "landlord";
 
@@ -39,7 +40,12 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center p-4">
+    <main className="min-h-[80vh] flex items-center justify-center p-4">
+      <SEOHead
+        title="Create Account"
+        description="Join GharKhoj Nepal. Create a free account as a tenant or landlord to find or list verified rental properties."
+        canonical="https://gharkhoj.com.np/signup"
+      />
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <Link to="/" className="inline-flex items-center justify-center gap-2 text-primary font-bold text-xl mb-2">
@@ -99,6 +105,6 @@ export default function Signup() {
           </p>
         </CardContent>
       </Card>
-    </div>
+    </main>
   );
 }

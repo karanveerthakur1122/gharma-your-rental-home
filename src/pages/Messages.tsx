@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { MessageCircle, Send, Loader2, ArrowLeft, Home, MoreVertical, Trash2, Archive, ArchiveRestore } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Link, useNavigate } from "react-router-dom";
+import { SEOHead } from "@/components/SEOHead";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -284,7 +285,8 @@ export default function MessagesPage() {
   };
 
   return (
-    <div className="container py-4 h-[calc(100vh-3.5rem)]">
+    <main className="container py-4 h-[calc(100vh-3.5rem)]">
+      <SEOHead title="Messages" description="Chat with landlords and tenants. Manage your rental conversations securely." noindex />
       <div className="flex h-full border rounded-xl overflow-hidden bg-card">
         {/* Sidebar */}
         <div className={`w-full md:w-80 lg:w-96 border-r flex flex-col shrink-0 ${activeConvo ? "hidden md:flex" : "flex"}`}>
@@ -508,6 +510,6 @@ export default function MessagesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </main>
   );
 }

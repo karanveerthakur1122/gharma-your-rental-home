@@ -11,6 +11,7 @@ import {
   MessageSquare, RefreshCw, MapPin, Calendar,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { SEOHead } from "@/components/SEOHead";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
@@ -235,7 +236,8 @@ export default function Dashboard() {
   if (!user || role !== "landlord") return null;
 
   return (
-    <div className="container py-6">
+    <main className="container py-6">
+      <SEOHead title="Landlord Dashboard" description="Manage your rental properties, track inquiries, and update listings." noindex />
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold">Landlord Dashboard</h1>
@@ -247,6 +249,6 @@ export default function Dashboard() {
       </div>
 
       <PropertiesTab user={user} />
-    </div>
+    </main>
   );
 }
