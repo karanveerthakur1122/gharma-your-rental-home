@@ -12,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
 import { ArrowLeft, Upload, X, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { SEOHead } from "@/components/SEOHead";
 
 type RoomType = "single" | "1bhk" | "2bhk" | "flat" | "hostel";
 
@@ -187,7 +188,8 @@ export default function PropertyForm() {
   if (authLoading || loadingData) return <div className="container py-20 text-center text-muted-foreground">Loading...</div>;
 
   return (
-    <div className="container py-6 max-w-3xl">
+    <main className="container py-6 max-w-3xl">
+      <SEOHead title={isEdit ? "Edit Property" : "Add New Property"} description="List your rental property on GharKhoj Nepal. Add details, images, and pricing." noindex />
       <Link to="/dashboard" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
         <ArrowLeft className="h-4 w-4" /> Back to Dashboard
       </Link>
@@ -414,6 +416,6 @@ export default function PropertyForm() {
           <Button type="button" variant="outline" onClick={() => navigate("/dashboard")}>Cancel</Button>
         </div>
       </form>
-    </div>
+    </main>
   );
 }

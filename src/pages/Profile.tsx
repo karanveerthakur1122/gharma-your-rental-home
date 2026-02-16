@@ -13,6 +13,7 @@ import { Link } from "react-router-dom";
 import {
   User, Mail, Phone, Calendar, Shield, Home, MessageSquare, Heart, Camera, Save, Loader2, ExternalLink, Lock, Eye, EyeOff,
 } from "lucide-react";
+import { SEOHead } from "@/components/SEOHead";
 
 export default function Profile() {
   const { user, role } = useAuth();
@@ -112,7 +113,8 @@ export default function Profile() {
     : "—";
 
   return (
-    <div className="container py-8 max-w-2xl">
+    <main className="container py-8 max-w-2xl">
+      <SEOHead title="My Profile" description="View and edit your GharKhoj Nepal profile, change your password, and manage your account." noindex />
       {/* Profile Header Card */}
       <Card className="mb-6 overflow-hidden">
         <div className="h-24 bg-gradient-to-r from-primary/20 via-primary/10 to-accent/20" />
@@ -226,7 +228,7 @@ export default function Profile() {
 
       {/* Change Password */}
       <ChangePasswordCard />
-    </div>
+    </main>
   );
 }
 

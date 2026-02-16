@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { SEOHead } from "@/components/SEOHead";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -79,12 +80,17 @@ export default function SearchPage() {
     : properties;
 
   return (
-    <div className="container py-6">
+    <main className="container py-6">
+      <SEOHead
+        title="Search Rental Properties"
+        description="Browse verified rental rooms, flats, and hostels across Nepal. Filter by city, price, and amenities. Find your perfect home today."
+        canonical="https://gharkhoj.com.np/search"
+      />
       {/* Header */}
-      <div className="mb-6">
+      <header className="mb-6">
         <h1 className="text-2xl font-bold text-foreground">Find Your Rental</h1>
         <p className="text-sm text-muted-foreground mt-1">{filtered.length} properties available across Nepal</p>
-      </div>
+      </header>
 
       {/* Search bar + filters */}
       <div className="flex flex-col gap-3 mb-6">
@@ -186,7 +192,7 @@ export default function SearchPage() {
           <PropertyMap properties={filtered} />
         </Suspense>
       )}
-    </div>
+    </main>
   );
 }
 

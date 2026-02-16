@@ -10,6 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import {
   Heart, MessageSquare, MapPin, Wifi, Car, PawPrint, Trash2, Clock, Calendar, Home, RefreshCw,
 } from "lucide-react";
+import { SEOHead } from "@/components/SEOHead";
 
 // ═══════════════════════════════════════════════
 // Favorites Tab
@@ -222,7 +223,8 @@ export default function TenantDashboard() {
   if (!user || role !== "tenant") return null;
 
   return (
-    <div className="container py-6">
+    <main className="container py-6">
+      <SEOHead title="My Dashboard" description="View your saved rental properties, manage favorites, and track your inquiries." noindex />
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold">My Dashboard</h1>
@@ -241,6 +243,6 @@ export default function TenantDashboard() {
         <TabsContent value="favorites"><FavoritesTab userId={user.id} /></TabsContent>
         <TabsContent value="inquiries"><MyInquiriesTab userId={user.id} /></TabsContent>
       </Tabs>
-    </div>
+    </main>
   );
 }

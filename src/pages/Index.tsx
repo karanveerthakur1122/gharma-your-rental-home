@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { SEOHead } from "@/components/SEOHead";
 
 /* ---------- tiny counter animation ---------- */
 function AnimatedCount({ target, suffix = "" }: { target: number; suffix?: string }) {
@@ -75,6 +76,11 @@ const Index = () => {
 
   return (
     <div className="flex flex-col">
+      <SEOHead
+        title="Find Verified Rental Rooms & Flats"
+        description="Nepal's trusted rental platform. Browse verified rooms, flats, and hostels across Kathmandu, Pokhara, Chitwan & more."
+        canonical="https://gharkhoj.com.np/"
+      />
       {/* ─── Hero ─── */}
       <section className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-accent to-background py-24 md:py-36">
         {/* decorative blobs */}
